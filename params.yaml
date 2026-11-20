@@ -1,0 +1,41 @@
+base:
+  project_name: "MP012-Parcel-Delivery-Days"
+  course: "SCSE3040 MLOps"
+  group_id: "G191"
+  problem_id: "MP012"
+  random_state: 42
+
+data:
+  raw_train_path: "data/raw/train.csv"
+  raw_later_path: "data/raw/later.csv"
+  raw_holdout_path: "data/raw/holdout_features.csv"
+  cleaned_train_path: "data/processed/cleaned_train.csv"
+  cleaned_later_path: "data/processed/cleaned_later.csv"
+  target_column: "delivery_days"
+  evaluation_metric: "mae"
+
+features:
+  numeric_cols:
+    - distance_km
+    - weight_kg
+    - hub_backlog
+    - pin_code_tier
+    - declared_value_rs
+    - transfers
+  categorical_cols:
+    - service
+    - destination
+
+rules:
+  max_transfers: 10
+  min_declared_value_rs: 50
+
+model:
+  v1:
+    type: "RandomForestRegressor"
+    n_estimators: 100
+    max_depth: 10
+    test_size: 0.2
+  v2:
+    retrain_split_ratio: 0.7
+    promotion_mae_threshold: 0.08
