@@ -186,3 +186,28 @@ Large data files (`train.csv` and `later.csv`) are managed using **DVC** and are
    - `train.csv`: `832feb9a92f32dc03087beaf6f4b175af9ed0f8493bada633218b43e4299170a`
    - `later.csv`: `cb42e3982b958dd40b49f76b50733850a40dcebbd3b426efdbcf823d9f0a64da`
    - `holdout_features.csv`: `fb1eb70796be734c8760d7b5fd73e91278c0dc755cd833b53b51e9477bce7f94`
+
+## Stage 3: Docker & Kubernetes Deployment
+
+### Build & Run Container Locally
+```bash
+docker build -t mp012-api:1.0 .
+docker run -d --name mp012-api-container -p 8000:8000 mp012-api:1.0
+curl -s http://127.0.0.1:8000/health
+curl -s -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" -d '{"distance_km": 320.0, "weight_kg": 4.5, "hub_backlog": 150, "pin_code_tier": 2, "declared_value_rs": 1200.0, "transfers": 2, "service": "express", "destination": "Metro"}'
+docker logs mp012-api-container
+docker stop mp012-api-container && docker rm mp012-api-container
+```
+
+### Kubernetes Manifests (`k8s/`)
+- **Deployment (`k8s/deployment.yaml`):** `mp012-api` with `3` replicas, image `mp012-api:1.0`, container port `8000`, resource requests/limits, and `readinessProbe` (`initialDelaySeconds: 5`) + `livenessProbe` (`initialDelaySeconds: 20`) on `/health`.
+- **Service (`k8s/service.yaml`):** `mp012-svc` forwarding port `80` to `targetPort: 8000`.
+
+```bash
+kubectl apply --dry-run=client -f k8s/
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+kubectl get deployments,pods,svc -l app=mp012-api
+kubectl rollout status deployment/mp012-api
+kubectl delete -f k8s/service.yaml -f k8s/deployment.yaml
+```
