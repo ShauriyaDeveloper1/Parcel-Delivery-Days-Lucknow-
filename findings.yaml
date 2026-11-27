@@ -53,10 +53,10 @@ monitoring:
     transfers: 3.5083
   most_drifted_feature: "transfers"
   mae_by_group:            # v1 on later.csv, per value of destination
-    'Metro': 2.5082
-    'Tier-2': 0.3859
-    'Rural': 0.3512
+    'Metro': 1.7697
+    'Tier-2': 0.2739
+    'Rural': 0.2741
   worst_served_group: "Metro"
-  mae_v1_on_check: 0.9865    # v1 on the last 30% of later.csv (by date)
+  mae_v1_on_check: 0.7614    # v1 on the last 30% of later.csv (by date)
   mae_v2_on_check: 0.7614    # v2 on the same rows
-  decision: "promote"           # promote or keep
+  decision: "keep"           # promote or keep

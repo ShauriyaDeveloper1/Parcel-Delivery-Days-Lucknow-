@@ -18,6 +18,9 @@ import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 
 from src.parcel_ml.preprocessing import build_preprocessor, prepare_features
+from src.parcel_ml.cleaning import clean_dataset
+from src.parcel_ml.logger import get_logger
+logger = get_logger("mp012.monitor")
 
 
 def calculate_psi(expected: pd.Series, actual: pd.Series, num_bins: int = 10, epsilon: float = 1e-4) -> float:
@@ -63,10 +66,12 @@ def run_stage4():
     holdout_pred_path = predictions_dir / "holdout_predictions.csv"
 
     # 1. Load Datasets
+    logger.info("Stage 4 monitoring started")
     print(f"Loading reference data from {train_path}...")
     train = pd.read_csv(train_path)
     print(f"Loading monitoring data from {later_path}...")
     later = pd.read_csv(later_path)
+    later = clean_dataset(later, is_train=False)
 
     # 2. Step 2: PSI Drift Detection
     psi_features = [
@@ -86,6 +91,9 @@ def run_stage4():
 
     most_drifted = max(psi_results, key=psi_results.get)
     print(f"Most Drifted Feature: {most_drifted} (PSI = {psi_results[most_drifted]})")
+    logger.info(
+    f"Drift analysis completed. Feature: {most_drifted}, PSI: {psi_results[most_drifted]:.4f}"
+)
 
     # 3. Step 4: Group-wise Evaluation of v1 on later.csv
     print(f"\n--- Group-wise Evaluation of v1 on later.csv ---")
@@ -133,7 +141,7 @@ def run_stage4():
     )
 
     # Setup MLflow
-    mlflow_uri = "sqlite:///mlflow.db"
+    mlflow_uri = "sqlite:///mlflow_stage4.db"
     mlflow.set_tracking_uri(mlflow_uri)
     experiment_name = "MP012_Parcel_Delivery_Days"
     mlflow.set_experiment(experiment_name)
@@ -199,6 +207,10 @@ def run_stage4():
         print(f"Decision: {decision} (v2 did not meet 8% improvement threshold).")
         champion_version_final = 1
         champion_pipeline = v1
+        logger.info(
+    f"Model evaluation completed. Improvement: {improvement * 100:.2f}%, "
+    f"Decision: {decision}"
+)
 
     # 5. Step 5: Holdout Predictions using @champion Model
     print("\n--- Generating Holdout Predictions ---")
@@ -214,6 +226,9 @@ def run_stage4():
 
     pred_df.to_csv(holdout_pred_path, index=False)
     print(f"Successfully saved {len(pred_df)} holdout predictions to {holdout_pred_path}")
+    logger.info(
+    f"Holdout predictions generated successfully. Count: {len(pred_df)}"
+)
     print(pred_df.head(5).to_string(index=False))
 
     # 6. Step 6: Update findings.yaml

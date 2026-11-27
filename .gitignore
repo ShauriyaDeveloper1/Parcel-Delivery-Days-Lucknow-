@@ -4,3 +4,6 @@ __pycache__/
 mlruns/
 mlartifacts/
 .pytest_cache/
+# Local MLflow databases and backups
+*.db
+*.db-*
